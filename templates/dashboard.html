@@ -1,0 +1,349 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Enhanced Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1 class="mb-3">Dashboard</h1>
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">{{ current_month }} {{ current_year }} Overview</h5>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="currencyDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        {{ default_currency.code }} ({{ default_currency.symbol }})
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="currencyDropdown">
+                        <li><a class="dropdown-item" href="{{ url_for('settings') }}">Change Default Currency</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted mb-2">Total Income</h6>
+                                <h3 class="text-success mb-0">{{ default_currency.symbol }}{{ "%.2f"|format(total_income) }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted mb-2">Total Expenses</h6>
+                                <h3 class="text-danger mb-0">{{ default_currency.symbol }}{{ "%.2f"|format(total_expense) }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body text-center">
+                                <h6 class="text-muted mb-2">Balance</h6>
+                                <h3 class="{% if balance >= 0 %}text-primary{% else %}text-danger{% endif %} mb-0">
+                                    {{ default_currency.symbol }}{{ "%.2f"|format(balance) }}
+                                </h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Expense Breakdown</h5>
+                <a href="{{ url_for('add_expense') }}" class="btn btn-sm btn-primary">Add Expense</a>
+            </div>
+            <div class="card-body">
+                {% if category_expenses %}
+                <canvas id="expenseChart" height="250"></canvas>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                    <p>No expenses recorded this month.</p>
+                    <a href="{{ url_for('add_expense') }}" class="btn btn-primary">Add Your First Expense</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Budget Status</h5>
+                <a href="{{ url_for('add_budget') }}" class="btn btn-sm btn-primary">Set Budget</a>
+            </div>
+            <div class="card-body">
+                {% if budget_data %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Budget</th>
+                                <th>Spent</th>
+                                <th>Remaining</th>
+                                <th>Progress</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for category, data in budget_data.items() %}
+                            <tr>
+                                <td>{{ category }}</td>
+                                <td>{{ default_currency.symbol }}{{ "%.2f"|format(data.budget) }}</td>
+                                <td>{{ default_currency.symbol }}{{ "%.2f"|format(data.spent) }}</td>
+                                <td>{{ default_currency.symbol }}{{ "%.2f"|format(data.remaining) }}</td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar {% if data.percentage > 100 %}bg-danger{% elif data.percentage > 80 %}bg-warning{% else %}bg-success{% endif %}" 
+                                             role="progressbar" 
+                                             style="width: {{ min(data.percentage, 100) }}%"
+                                             aria-valuenow="{{ data.percentage }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                            {{ "%.0f"|format(data.percentage) }}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-money-bill-wave fa-3x text-muted mb-3"></i>
+                    <p>No budgets set for this month.</p>
+                    <a href="{{ url_for('add_budget') }}" class="btn btn-primary">Set Your First Budget</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Upcoming Recurring Expenses</h5>
+                <a href="{{ url_for('recurring_expenses') }}" class="btn btn-sm btn-primary">Manage</a>
+            </div>
+            <div class="card-body">
+                {% if upcoming_recurring %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Amount</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in upcoming_recurring %}
+                            <tr>
+                                <td>{{ expense.name }}</td>
+                                <td>{{ expense.category }}</td>
+                                <td>{{ default_currency.symbol }}{{ "%.2f"|format(expense.amount) }}</td>
+                                <td>{{ expense.date.strftime('%Y-%m-%d') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
+                    <p>No upcoming recurring expenses.</p>
+                    <a href="{{ url_for('add_recurring_expense') }}" class="btn btn-primary">Add Recurring Expense</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Financial Goals</h5>
+                <a href="{{ url_for('financial_goals') }}" class="btn btn-sm btn-primary">Manage</a>
+            </div>
+            <div class="card-body">
+                {% if goals %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Goal</th>
+                                <th>Progress</th>
+                                <th>Amount</th>
+                                <th>Remaining</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for goal in goals %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('view_financial_goal', id=goal.id) }}">{{ goal.name }}</a>
+                                    {% if goal.days_remaining %}
+                                    <small class="d-block text-muted">{{ goal.days_remaining }} days left</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" 
+                                             role="progressbar" 
+                                             style="width: {{ min(goal.percentage, 100) }}%"
+                                             aria-valuenow="{{ goal.percentage }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                            {{ "%.0f"|format(goal.percentage) }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ default_currency.symbol }}{{ "%.2f"|format(goal.current_amount) }} / {{ default_currency.symbol }}{{ "%.2f"|format(goal.target_amount) }}</td>
+                                <td>{{ default_currency.symbol }}{{ "%.2f"|format(goal.target_amount - goal.current_amount) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-bullseye fa-3x text-muted mb-3"></i>
+                    <p>No financial goals set.</p>
+                    <a href="{{ url_for('add_financial_goal') }}" class="btn btn-primary">Set Your First Goal</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Recent Transactions</h5>
+                <div>
+                    <a href="{{ url_for('expenses') }}" class="btn btn-sm btn-outline-primary me-2">View All Expenses</a>
+                    <a href="{{ url_for('export_expenses') }}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-download me-1"></i>Export
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if expenses %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Description</th>
+                                <th>Amount</th>
+                                <th>Currency</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for expense in expenses[:5] %}
+                            <tr>
+                                <td>{{ expense.date.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ expense.category.name }}</td>
+                                <td>{{ expense.description }}</td>
+                                <td class="text-danger">{{ expense.currency.symbol }}{{ "%.2f"|format(expense.amount) }}</td>
+                                <td>{{ expense.currency.code }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <p>No recent transactions.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if notifications %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Notifications</h5>
+                <a href="{{ url_for('notifications') }}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for notification in notifications %}
+                    <a href="{{ url_for('mark_notification_read', id=notification.id) }}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ notification.title }}</h6>
+                            <small>{{ notification.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                        </div>
+                        <p class="mb-1">{{ notification.message }}</p>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if category_expenses %}
+    const ctx = document.getElementById('expenseChart').getContext('2d');
+    
+    const expenseChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: [{% for category in category_expenses %}'{{ category }}',{% endfor %}],
+            datasets: [{
+                data: [{% for amount in category_expenses.values() %}{{ amount }},{% endfor %}],
+                backgroundColor: [
+                    '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+                    '#5a5c69', '#858796', '#6f42c1', '#fd7e14', '#20c997'
+                ],
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            let value = context.raw || 0;
+                            let total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            let percentage = Math.round((value / total) * 100);
+                            return `${label}: {{ default_currency.symbol }}${value.toFixed(2)} (${percentage}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    {% endif %}
+});
+</script>
+{% endblock %}
+{% endblock %}

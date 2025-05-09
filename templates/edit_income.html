@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Income - Enhanced Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-success text-white">
+                <h3 class="mb-0">Edit Income</h3>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" id="editIncomeForm">
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Amount</label>
+                        <div class="input-group">
+                            <select class="form-select" id="currency" name="currency" style="max-width: 120px;">
+                                {% for currency in currencies %}
+                                <option value="{{ currency.id }}" {% if currency.id == income.currency_id %}selected{% endif %}>
+                                    {{ currency.code }} ({{ currency.symbol }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <input type="number" step="0.01" min="0.01" class="form-control" id="amount" name="amount" value="{{ income.amount }}" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <input type="text" class="form-control" id="description" name="description" value="{{ income.description }}">
+                    </div>
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Date</label>
+                        <input type="date" class="form-control" id="date" name="date" value="{{ income.date.strftime('%Y-%m-%d') }}">
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success">Update Income</button>
+                        <a href="{{ url_for('incomes') }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const editIncomeForm = document.getElementById('editIncomeForm');
+    editIncomeForm.addEventListener('submit', function(event) {
+        const amount = document.getElementById('amount').value;
+        
+        if (amount <= 0) {
+            alert('Amount must be greater than zero');
+            event.preventDefault();
+            return;
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8 text-center">
+        <div class="card shadow-lg border-0 rounded-lg">
+            <div class="card-body p-5">
+                <h1 class="display-4 mb-4">Student Expense Tracker</h1>
+                <p class="lead mb-4">Take control of your finances with our easy-to-use expense tracking tool designed specifically for university students.</p>
+                <div class="row mt-5">
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center p-4">
+                                <i class="fas fa-user-plus fa-3x text-primary mb-3"></i>
+                                <h3>New User?</h3>
+                                <p>Create an account to start tracking your expenses.</p>
+                                <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg mt-2">Register</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center p-4">
+                                <i class="fas fa-sign-in-alt fa-3x text-success mb-3"></i>
+                                <h3>Existing User?</h3>
+                                <p>Sign in to access your expense dashboard.</p>
+                                <a href="{{ url_for('login') }}" class="btn btn-success btn-lg mt-2">Login</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-5">
+            <div class="col-md-4 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-chart-pie fa-2x text-info mb-3"></i>
+                        <h4>Track Expenses</h4>
+                        <p>Categorize and monitor your spending habits.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-money-bill-wave fa-2x text-success mb-3"></i>
+                        <h4>Set Budgets</h4>
+                        <p>Create monthly budgets to manage your finances.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-file-export fa-2x text-warning mb-3"></i>
+                        <h4>Export Data</h4>
+                        <p>Download your expense data for further analysis.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

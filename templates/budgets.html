@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% block title %}Budgets - Enhanced Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h1>Budgets</h1>
+            <div>
+                <a href="{{ url_for('add_budget') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Set Budget
+                </a>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">{{ current_month }} {{ current_year }} Budgets</h5>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-calendar me-1"></i>{{ current_month }} {{ current_year }}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        {% for m in range(1, 13) %}
+                        <li><a class="dropdown-item {% if m == month %}active{% endif %}" href="{{ url_for('budgets', month=m, year=year) }}">{{ month_names[m] }} {{ year }}</a></li>
+                        {% endfor %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{{ url_for('budgets', month=month, year=year-1) }}">{{ month_names[month] }} {{ year-1 }}</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('budgets', month=month, year=year+1) }}">{{ month_names[month] }} {{ year+1 }}</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if budgets %}
+                <div class="row">
+                    {% for budget in budgets %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">{{ budget.category.name }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Budget:</span>
+                                    <span class="fw-bold">{{ budget.currency.symbol }}{{ "%.2f"|format(budget.amount) }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Spent:</span>
+                                    <span class="fw-bold {% if budget.spent > budget.amount %}text-danger{% endif %}">
+                                        {{ budget.currency.symbol }}{{ "%.2f"|format(budget.spent) }}
+                                    </span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-3">
+                                    <span>Remaining:</span>
+                                    <span class="fw-bold {% if budget.remaining < 0 %}text-danger{% else %}text-success{% endif %}">
+                                        {{ budget.currency.symbol }}{{ "%.2f"|format(budget.remaining) }}
+                                    </span>
+                                </div>
+                                <div class="progress mb-2" style="height: 20px;">
+                                    <div class="progress-bar {% if budget.percentage > 100 %}bg-danger{% elif budget.percentage > 80 %}bg-warning{% else %}bg-success{% endif %}" 
+                                         role="progressbar" 
+                                         style="width: {{ min(budget.percentage, 100) }}%"
+                                         aria-valuenow="{{ budget.percentage }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                        {{ "%.0f"|format(budget.percentage) }}%
+                                    </div>
+                                </div>
+                                <div class="text-center mt-3">
+                                    <a href="{{ url_for('expenses', category=budget.category_id) }}" class="btn btn-sm btn-outline-primary">View Expenses</a>
+                                </div>
+                            </div>
+                            <div class="card-footer bg-white">
+                                <form method="POST" action="{{ url_for('add_budget') }}" class="d-flex">
+                                    <input type="hidden" name="category" value="{{ budget.category_id }}">
+                                    <input type="hidden" name="month" value="{{ month }}">
+                                    <input type="hidden" name="year" value="{{ year }}">
+                                    <input type="hidden" name="currency" value="{{ budget.currency_id }}">
+                                    <input type="number" step="0.01" min="0.01" class="form-control me-2" name="amount" value="{{ budget.amount }}">
+                                    <button type="submit" class="btn btn-primary">Update</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-piggy-bank fa-3x text-muted mb-3"></i>
+                    <p>No budgets set for {{ current_month }} {{ current_year }}.</p>
+                    <a href="{{ url_for('add_budget') }}" class="btn btn-primary">Set Your First Budget</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Categories Without Budgets</h5>
+            </div>
+            <div class="card-body">
+                {% set categories_with_budgets = budgets|map(attribute='category_id')|list %}
+                {% set categories_without_budgets = categories|selectattr('id', 'not in', categories_with_budgets)|list %}
+                
+                {% if categories_without_budgets %}
+                <div class="row">
+                    {% for category in categories_without_budgets %}
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body">
+                                <h5 class="mb-3">{{ category.name }}</h5>
+                                <form method="POST" action="{{ url_for('add_budget') }}" class="d-flex">
+                                    <input type="hidden" name="category" value="{{ category.id }}">
+                                    <input type="hidden" name="month" value="{{ month }}">
+                                    <input type="hidden" name="year" value="{{ year }}">
+                                    <input type="hidden" name="currency" value="{{ default_currency.id }}">
+                                    <input type="number" step="0.01" min="0.01" class="form-control me-2" name="amount" placeholder="Budget amount">
+                                    <button type="submit" class="btn btn-primary">Set Budget</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-center py-3">All categories have budgets set for this month.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

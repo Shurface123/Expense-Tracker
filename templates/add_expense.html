@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Expense - Enhanced Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">Add Expense</h3>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" id="expenseForm">
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Amount</label>
+                        <div class="input-group">
+                            <select class="form-select" id="currency" name="currency" style="max-width: 120px;">
+                                {% for currency in currencies %}
+                                <option value="{{ currency.id }}" {% if currency.id == default_currency_id %}selected{% endif %}>
+                                    {{ currency.code }} ({{ currency.symbol }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <input type="number" step="0.01" min="0.01" class="form-control" id="amount" name="amount" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="category" class="form-label">Category</label>
+                        <select class="form-select" id="category" name="category" required>
+                            <option value="" selected disabled>Select a category</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <input type="text" class="form-control" id="description" name="description">
+                    </div>
+                    <div class="mb-3">
+                        <label for="date" class="form-label">Date</label>
+                        <input type="date" class="form-control" id="date" name="date" value="{{ today.strftime('%Y-%m-%d') }}">
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="createRecurring" name="createRecurring">
+                            <label class="form-check-label" for="createRecurring">
+                                Make this a recurring expense
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div id="recurringOptions" class="mb-3 border p-3 rounded d-none">
+                        <h5 class="mb-3">Recurring Options</h5>
+                        <div class="mb-3">
+                            <label for="frequency" class="form-label">Frequency</label>
+                            <select class="form-select" id="frequency" name="frequency">
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="biweekly">Bi-weekly</option>
+                                <option value="monthly" selected>Monthly</option>
+                                <option value="quarterly">Quarterly</option>
+                                <option value="yearly">Yearly</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="start_date" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" value="{{ today.strftime('%Y-%m-%d') }}">
+                        </div>
+                        <div class="mb-3">
+                            <label for="end_date" class="form-label">End Date (Optional)</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date">
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Add Expense</button>
+                        <a href="{{ url_for('expenses') }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const createRecurringCheckbox = document.getElementById('createRecurring');
+    const recurringOptions = document.getElementById('recurringOptions');
+    
+    createRecurringCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            recurringOptions.classList.remove('d-none');
+        } else {
+            recurringOptions.classList.add('d-none');
+        }
+    });
+    
+    // Form validation
+    const expenseForm = document.getElementById('expenseForm');
+    expenseForm.addEventListener('submit', function(event) {
+        const amount = document.getElementById('amount').value;
+        const category = document.getElementById('category').value;
+        
+        if (amount <= 0) {
+            alert('Amount must be greater than zero');
+            event.preventDefault();
+            return;
+        }
+        
+        if (!category) {
+            alert('Please select a category');
+            event.preventDefault();
+            return;
+        }
+    });
+});
+</script>
+{% endblock %}
